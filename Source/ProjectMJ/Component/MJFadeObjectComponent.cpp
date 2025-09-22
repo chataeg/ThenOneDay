@@ -159,7 +159,7 @@ void UMJFadeObjectComponent::AddObjectHideTimer()
 				{
 					FFadeSystemStuc& Item = FadeObject[FoundIndex];
 
-					// 원래 머티리얼로 복원
+				
 					for (int32 m = 0; m < Item.BaseMatInterface.Num(); ++m)
 					{
 						Comp->SetMaterial(m, Item.BaseMatInterface[m]);
@@ -241,7 +241,7 @@ void UMJFadeObjectComponent::AddObjectHideTimer()
 				{
 					FFadeSystemStuc& Item = FadeObject[FoundIndex];
 
-					// 원래 머티리얼 복원
+				
 					for (int32 m = 0; m < Item.BaseMatInterface.Num(); ++m)
 					{
 						Comp->SetMaterial(m, Item.BaseMatInterface[m]);
