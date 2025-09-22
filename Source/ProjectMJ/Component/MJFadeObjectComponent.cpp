@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Component/MJFadeObjectComponent.h"
@@ -78,141 +78,230 @@ void UMJFadeObjectComponent::BeginPlay()
 		SetActivate(bIsActivate);
 	}
 		
-	
+	UGameplayStatics::GetAllActorsOfClass(this, PlayerClass, CharacterArray);
+
+	CachedTraceObjectTypes.Empty();
+	CachedTraceObjectTypes.Reserve(ObjectTypes.Num());
+
+	for (const auto& OT : ObjectTypes)
+	{
+		CachedTraceObjectTypes.Add(UEngineTypes::ConvertToObjectType(OT.GetValue()));
+	}
+
+	CachedTraceParams = FCollisionQueryParams(TEXT("FadeObjectsTrace"), bIsTraceComplex, GetOwner());
+	CachedTraceParams.bReturnPhysicalMaterial = false;
+	CachedTraceParams.bTraceComplex = bIsTraceComplex;
+	CachedTraceParams.AddIgnoredActors(ActorIgnore);
 }
 
 void UMJFadeObjectComponent::AddObjectHideTimer()
 {
-	UGameplayStatics::GetAllActorsOfClass(this, PlayerClass, CharacterArray);
+	const FVector TraceStart = GEngine->GetFirstLocalPlayerController(GetOwner()->GetWorld())->PlayerCameraManager->GetCameraLocation();
+
+	TArray<FHitResult>HitArray;
+	HitArray.Reserve(64);
 
 	for (AActor* CurrentActor : CharacterArray)
 	{
-		const FVector TraceStart=GEngine->GetFirstLocalPlayerController(GetOwner()->GetWorld())->PlayerCameraManager->GetCameraLocation();
-		const FVector TraceEnd = CurrentActor->GetActorLocation();
-		FVector TraceLength = TraceStart - TraceEnd;
-		const FQuat AcQuat = CurrentActor->GetActorQuat();
 
-		if (TraceLength.Size() < WorkDistance)
+		if (!IsValid(CurrentActor))
 		{
-			FCollisionQueryParams TraceParams(TEXT("FadeObjectsTrace"), bIsTraceComplex, GetOwner());
+			return;
+		}
+		const FVector TargetLocation = CurrentActor->GetActorLocation();
+		const float DistSq = FVector::DistSquared(TraceStart, TargetLocation);
+		if (DistSq > FMath::Square(WorkDistance))
+		{
+			continue;
+		}
+		HitArray.Reset();
 
-			TraceParams.AddIgnoredActors(ActorIgnore);
-			TraceParams.bReturnPhysicalMaterial = false;
-			TraceParams.bTraceComplex = bIsTraceComplex;
+		GetOwner()->GetWorld()->SweepMultiByObjectType(HitArray, TraceStart, TargetLocation, FQuat::Identity, CachedTraceObjectTypes,
+			FCollisionShape::MakeCapsule(CapsuleRadius, CapsuleHalfHeight), CachedTraceParams);
 
-			TArray<FHitResult>HitArray;
-			TArray<TEnumAsByte<EObjectTypeQuery>> traceObjectTypes;
 
-			for (int i = 0; i < ObjectTypes.Num(); i++)
+		for (const FHitResult& HR : HitArray)
+		{
+			UPrimitiveComponent* HitComp = HR.GetComponent();
+			if (!HR.bBlockingHit || !IsValid(HitComp))
 			{
-				traceObjectTypes.Add(UEngineTypes::ConvertToObjectType(ObjectTypes[i].GetValue()));
+				continue;
 			}
-			GetOwner()->GetWorld()->SweepMultiByObjectType(HitArray, TraceStart, TraceEnd, AcQuat, traceObjectTypes,
-				FCollisionShape::MakeCapsule(CapsuleRadius, CapsuleHalfHeight), TraceParams);
 
-			for (int IHit = 0; IHit < HitArray.Num(); IHit++)
+			if (!FadeObjectsHit.Contains(HitComp))
 			{
-				if (HitArray[IHit].bBlockingHit && IsValid(HitArray[IHit].GetComponent())
-					&& !FadeObjectsHit.Contains(HitArray[IHit].GetComponent()))
+				FadeObjectsHit.Add(HitComp);
+			}
+
+		}
+		for (int32 i = FadeObjectTemp.Num() - 1; i >= 0; --i)
+		{
+			UPrimitiveComponent* Comp = FadeObjectTemp[i];
+			if (!IsValid(Comp))
+			{
+				FadeObjectTemp.RemoveAt(i);
+				continue;
+			}
+
+			if (!FadeObjectsHit.Contains(Comp))
+			{
+				int32 FoundIndex = INDEX_NONE;
+				for (int32 j = 0; j < FadeObject.Num(); ++j)
 				{
-					FadeObjectsHit.AddUnique(HitArray[IHit].GetComponent());
+					if (FadeObject[j].PrimitiveComp == Comp)
+					{
+						FoundIndex = j;
+						break;
+					}
+				}
+
+				if (FoundIndex != INDEX_NONE)
+				{
+					FFadeSystemStuc& Item = FadeObject[FoundIndex];
+
+					// 원래 머티리얼로 복원
+					for (int32 m = 0; m < Item.BaseMatInterface.Num(); ++m)
+					{
+						Comp->SetMaterial(m, Item.BaseMatInterface[m]);
+					}
+					Item.SetToHide(false);
+
+				}
+
+			}
+		}
+
+	}
+
+	for (UPrimitiveComponent* PrimComp : FadeObjectsHit)
+	{
+		if (!IsValid(PrimComp))
+		{
+			continue;
+		}
+
+		if (ComponentMIDMap.Contains(PrimComp))
+		{
+			if (!FadeObjectTemp.Contains(PrimComp))
+			{
+				FadeObjectTemp.Add(PrimComp);
+			}
+			continue;
+		}
+
+		TArray<UMaterialInterface*> IBaseMaterials;
+		TArray<UMaterialInstanceDynamic*> IMID;
+		const int32 NumMats = PrimComp->GetNumMaterials();
+		IBaseMaterials.Reserve(NumMats);
+		IMID.Reserve(NumMats);
+
+		for (int32 idx = 0; idx < NumMats; ++idx)
+		{
+			UMaterialInterface* CurMat = PrimComp->GetMaterial(idx);
+			IBaseMaterials.Add(CurMat);
+
+			UMaterialInstanceDynamic* NewMID = UMaterialInstanceDynamic::Create(FadeMaterial, PrimComp);
+			IMID.Add(NewMID);
+
+			PrimComp->SetMaterial(idx, NewMID);
+		}
+
+		FFadeSystemStuc NewObject;
+		NewObject.NewElement(PrimComp, IBaseMaterials, IMID, ImmediatelyFade, true);
+		NewObject.CameraCollsion = PrimComp->GetCollisionResponseToChannel(ECC_Camera);
+
+		FadeObject.Add(NewObject);
+
+
+		TArray<TWeakObjectPtr<UMaterialInstanceDynamic>> WeakMIDs;
+		for (UMaterialInstanceDynamic* m : IMID) WeakMIDs.Add(m);
+		ComponentMIDMap.Add(PrimComp, WeakMIDs);
+
+
+		PrimComp->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+
+		for (int32 Fot = 0; Fot < FadeObjectTemp.Num(); ++Fot)
+		{
+			UPrimitiveComponent* Comp = FadeObjectTemp[Fot];
+			if (!IsValid(Comp)) continue;
+
+
+			if (!FadeObjectsHit.Contains(Comp))
+			{
+				int32 FoundIndex = INDEX_NONE;
+				for (int32 j = 0; j < FadeObject.Num(); ++j)
+				{
+					if (FadeObject[j].PrimitiveComp == Comp)
+					{
+						FoundIndex = j;
+						break;
+					}
+				}
+				if (FoundIndex != INDEX_NONE)
+				{
+					FFadeSystemStuc& Item = FadeObject[FoundIndex];
+
+					// 원래 머티리얼 복원
+					for (int32 m = 0; m < Item.BaseMatInterface.Num(); ++m)
+					{
+						Comp->SetMaterial(m, Item.BaseMatInterface[m]);
+					}
+
+					if (IsValid(Item.PrimitiveComp))
+					{
+						Item.PrimitiveComp->SetCollisionResponseToChannel(ECC_Camera, Item.CameraCollsion);
+					}
+
+					Item.SetToHide(false);
+
 				}
 			}
 		}
 	}
 
-	for (int IObject = 0; IObject < FadeObjectsHit.Num(); IObject++)
-	{
-		if (!FadeObjectTemp.Contains(FadeObjectsHit[IObject]))
-			{
-
-			FadeObjectTemp.AddUnique(FadeObjectsHit[IObject]);
-			
-			TArray<UMaterialInterface*> IBaseMaterials;
-			TArray<UMaterialInstanceDynamic*> IMID;
-			
-			IBaseMaterials.Empty();
-			IMID.Empty();
-
-			for (int Nm = 0; Nm < FadeObjectsHit[IObject]->GetNumMaterials(); Nm++)
-			{
-				IMID.Add(UMaterialInstanceDynamic::Create(FadeMaterial, FadeObjectsHit[IObject]));
-				IBaseMaterials.Add(FadeObjectsHit[IObject]->GetMaterial(Nm));
-
-				FadeObjectsHit[IObject]->SetMaterial(Nm, IMID.Last());
-
-			}
-			FFadeSystemStuc NewObject;
-			NewObject.NewElement(FadeObjectsHit[IObject], IBaseMaterials, IMID, ImmediatelyFade, true);
-			NewObject.CameraCollsion = FadeObjectsHit[IObject]->GetCollisionResponseToChannel(ECC_Camera);
-
-			FadeObject.Add(NewObject);
-
-			FadeObjectsHit[IObject]->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
-			}
-	}
-	for (int Fot = 0; Fot < FadeObjectTemp.Num(); ++Fot)
-	{
-		if (!FadeObjectsHit.Contains(FadeObjectTemp[Fot]))
-		{
-			FadeObject[Fot].SetToHide(false);
-		}
-	}
 	FadeObjectsHit.Empty();
 
 }
 
 void UMJFadeObjectComponent::FadeWorkTimer()
 {
-	if (FadeObject.Num() > 0)
+	if (FadeObject.Num() == 0) return;
+
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	for (int32 i = FadeObject.Num() - 1; i >= 0; --i)
 	{
-		for (int IObject = 0; IObject < FadeObject.Num(); ++IObject)
+		FFadeSystemStuc& Item = FadeObject[i];
+
+		const bool bToHide = Item.bToHide;
+		const float TargetF = bToHide ? FarObjectFade : 1.0f;
+		const float CurrentF = Item.FadeCount;
+
+		const float NewFade = FMath::FInterpConstantTo(CurrentF, TargetF, World->GetDeltaSeconds(), FadeRate);
+
+
+		for (UMaterialInstanceDynamic* MID : Item.FadeMID)
 		{
-			float AdaptiveFade;
-			int FniD = IObject;
-			
-			if (FniD == FadeObject.Num())
+			if (IsValid(MID))
 			{
-				AdaptiveFade = NearObjectFade;
-			}
-			else
-			{
-				AdaptiveFade = FarObjectFade;
-			}
-
-			for (int i = 0; i < FadeObject[IObject].FadeMID.Num(); i++)
-			{
-				float TargetF;
-				const float CurrentF = FadeObject[IObject].FadeCount;
-				if (FadeObject[IObject].bToHide)
-				{
-					TargetF = AdaptiveFade;
-				}
-				else
-				{
-					TargetF = 1.0f;
-				}
-				const float NewFade = FMath::FInterpConstantTo(CurrentF, TargetF, GetOwner()->GetWorld()->GetDeltaSeconds(), FadeRate);
-
-				FadeObject[IObject].FadeMID[i]->SetScalarParameterValue("Fade", NewFade);
-				CurrentFade = NewFade;
-
-				FadeObject[IObject].SetHideAndFade(FadeObject[IObject].bToHide, NewFade);
-			}
-			if (CurrentFade == 1.0f)
-			{
-				for (int IBaseMat = 0; IBaseMat < FadeObject[FniD].BaseMatInterface.Num(); ++IBaseMat)
-				{
-					FadeObject[FniD].PrimitiveComp->SetMaterial(IBaseMat, FadeObject[FniD].BaseMatInterface[IBaseMat]);
-				}
-
-				FadeObject[FniD].PrimitiveComp->SetCollisionResponseToChannel(ECC_Camera, FadeObject[FniD].CameraCollsion);
-				FadeObject.RemoveAt(FniD);
-				FadeObjectTemp.RemoveAt(FniD);
+				MID->SetScalarParameterValue(TEXT("Fade"), NewFade);
 			}
 		}
 
+
+		Item.SetHideAndFade(bToHide, NewFade);
+		Item.FadeCount = NewFade;
+
+
+		if (FMath::IsNearlyEqual(NewFade, 1.0f, 1e-3f))
+		{
+			ComponentMIDMap.Remove(Item.PrimitiveComp);
+			FadeObject.RemoveAt(i, 1, false);
+			FadeObjectTemp.Remove(Item.PrimitiveComp);
+		}
 	}
+
 
 }
 

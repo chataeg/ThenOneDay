@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -145,5 +145,10 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Fade Objects")
 	float ImmediatelyFade;
 
+	TMap<TWeakObjectPtr<UPrimitiveComponent>, TArray<TWeakObjectPtr<UMaterialInstanceDynamic>>> ComponentMIDMap;
+
+	TArray<TEnumAsByte<EObjectTypeQuery>> CachedTraceObjectTypes;
+
+	FCollisionQueryParams CachedTraceParams;
 };
 
