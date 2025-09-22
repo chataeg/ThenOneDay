@@ -93,8 +93,8 @@ protected:
 	TObjectPtr<UMJPlayerCombatComponent>PlayerCombatComponent;
 
 	//FadeActor System Part
-	/*UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category="Fade", meta = (AllowPrivateAccess = true))
-	TObjectPtr<UMJFadeObjectComponent>FadeComponent;*/
+	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category="Fade", meta = (AllowPrivateAccess = true))
+	TObjectPtr<UMJFadeObjectComponent>FadeComponent;
 #pragma endregion
 
 public:

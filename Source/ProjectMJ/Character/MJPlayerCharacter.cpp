@@ -55,7 +55,8 @@ AMJPlayerCharacter::AMJPlayerCharacter()
 	PlayerCombatComponent = CreateDefaultSubobject<UMJPlayerCombatComponent>(TEXT("PlayerCombatComponent"));
 
 	//Add FadeComponent
-	//FadeComponent = CreateDefaultSubobject<UMJFadeObjectComponent>(TEXT("FadeComponent"));
+	FadeComponent = CreateDefaultSubobject<UMJFadeObjectComponent>(TEXT("FadeComponent"));
+
 	// Minjin: AI Perception-캐릭터를 StimuliSource로 등록(AI가 감지)
 	PerceptionStimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("AIPerceptionStimuliSourceComponent"));
 	if (nullptr!= PerceptionStimuliSourceComponent)
