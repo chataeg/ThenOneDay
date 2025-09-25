@@ -220,43 +220,6 @@ void UMJFadeObjectComponent::AddObjectHideTimer()
 
 		PrimComp->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 
-		for (int32 Fot = 0; Fot < FadeObjectTemp.Num(); ++Fot)
-		{
-			UPrimitiveComponent* Comp = FadeObjectTemp[Fot];
-			if (!IsValid(Comp)) continue;
-
-
-			if (!FadeObjectsHit.Contains(Comp))
-			{
-				int32 FoundIndex = INDEX_NONE;
-				for (int32 j = 0; j < FadeObject.Num(); ++j)
-				{
-					if (FadeObject[j].PrimitiveComp == Comp)
-					{
-						FoundIndex = j;
-						break;
-					}
-				}
-				if (FoundIndex != INDEX_NONE)
-				{
-					FFadeSystemStuc& Item = FadeObject[FoundIndex];
-
-				
-					for (int32 m = 0; m < Item.BaseMatInterface.Num(); ++m)
-					{
-						Comp->SetMaterial(m, Item.BaseMatInterface[m]);
-					}
-
-					if (IsValid(Item.PrimitiveComp))
-					{
-						Item.PrimitiveComp->SetCollisionResponseToChannel(ECC_Camera, Item.CameraCollsion);
-					}
-
-					Item.SetToHide(false);
-
-				}
-			}
-		}
 	}
 
 	FadeObjectsHit.Empty();
