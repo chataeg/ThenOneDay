@@ -98,6 +98,7 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void Test_DeleteAI();
+	
 	UFUNCTION(BlueprintCallable)
 	void OnAIDestroy(AActor* DestroyedActor);
 

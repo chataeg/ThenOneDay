@@ -3,7 +3,6 @@
 
 #include "MJGameModeDungeon.h"
 
-#include "ProjectMJ.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/MJPlayerState.h"
 #include "TG/MJGameInstance.h"
@@ -17,13 +16,6 @@ AMJGameModeDungeon::AMJGameModeDungeon()
 void AMJGameModeDungeon::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	AMJPlayerState* MJPS = Cast<AMJPlayerState>(UGameplayStatics::GetPlayerState(this,0));
-
-	if (MJPS)
-	{
-	//	MJPS->LoadFromInstancedPlayerSessionData();
-	}
 	
 }
 
@@ -49,7 +41,5 @@ bool AMJGameModeDungeon::TravelToMapByNode(const FString MapName, const uint8 No
 	}
 	
 	return Super::TravelToMapByNode(MapName, NodeNum);
-
-	
 }
 

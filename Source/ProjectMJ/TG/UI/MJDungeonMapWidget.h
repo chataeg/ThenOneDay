@@ -27,13 +27,7 @@ public:
 	
 	UFUNCTION()
 	void SetAllVisibility(ESlateVisibility NewVisibility);
-	//
-	// UPROPERTY(meta = (BindWidget))
-	// TObjectPtr<UImage> Background;
-
-
 	
-
 protected:
 	
 	virtual void NativeConstruct() override;

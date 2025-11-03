@@ -62,7 +62,7 @@ void UMJDungeonMapWidget::DrawNode()
 				
 				if (AssignedSlot)
 				{
-					AssignedSlot->SetPosition(FVector2d(Iter.UICoordinate.X,Iter.UICoordinate.Y));
+					AssignedSlot->SetPosition(FVector2d(Iter.UICoord.X,Iter.UICoord.Y));
 					
 				}
 				
@@ -83,7 +83,7 @@ void UMJDungeonMapWidget::DrawEdge()
 		{
 			for (auto& IterNodeConnectedNodeID : IterNode.ConnectedNodeIDs)
 			{
-				FVector2D NewPivotPoint = (IterNode.UICoordinate + DungeonGraph->Nodes[IterNodeConnectedNodeID].UICoordinate) / 2 + 50.f;
+				FVector2D NewPivotPoint = (IterNode.UICoord + DungeonGraph->Nodes[IterNodeConnectedNodeID].UICoord) / 2 + 50.f;
 
 				
 				if (!PivotPoints.Contains(NewPivotPoint))
@@ -93,9 +93,9 @@ void UMJDungeonMapWidget::DrawEdge()
 					UUserWidget* NewEdgeWidget = CreateWidget(this,EdgeWidgetClass);
 					if (NewEdgeWidget)
 					{
-						FVector2D DeltaVector = DungeonGraph->Nodes[IterNodeConnectedNodeID].UICoordinate - IterNode.UICoordinate;
+						FVector2D DeltaVector = DungeonGraph->Nodes[IterNodeConnectedNodeID].UICoord - IterNode.UICoord;
 
-						float Distance2D = UKismetMathLibrary::Distance2D(DungeonGraph->Nodes[IterNodeConnectedNodeID].UICoordinate, IterNode.UICoordinate);
+						float Distance2D = UKismetMathLibrary::Distance2D(DungeonGraph->Nodes[IterNodeConnectedNodeID].UICoord, IterNode.UICoord);
 
 						float Angle = FMath::RadiansToDegrees(FMath::Atan2(DeltaVector.Y, DeltaVector.X));
 						

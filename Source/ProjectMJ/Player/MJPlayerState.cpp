@@ -16,8 +16,6 @@ AMJPlayerState::AMJPlayerState()
 {
 	ASC = CreateDefaultSubobject<UMJAbilitySystemComponent>(TEXT("ASC"));
 	CharacterAttributeSet = CreateDefaultSubobject<UMJCharacterAttributeSet>(TEXT("CharacterAttributeSet"));
-	MJ_LOG(LogTG,Log, TEXT("Ptr : %p"),this);
-	
 	CharacterSkillAttributeSet = CreateDefaultSubobject<UMJCharacterSkillAttributeSet>(TEXT("CharacterSkillAttributeSet"));
 }
 
@@ -78,11 +76,6 @@ void AMJPlayerState::LoadFromInstancedPlayerSessionData()
 		}
 	
 	}
-}
-
-void AMJPlayerState::PostInitializeComponents()
-{
-	Super::PostInitializeComponents();
 }
 
 void AMJPlayerState::BeginPlay()

@@ -54,10 +54,8 @@ void AMJSceneCapture2D::BeginPlay()
 			if (IsValid(Iter))
 			{
 				GetCaptureComponent2D()->ShowOnlyComponents.Add(Iter->FindComponentByClass<UMJMiniMapIconMeshComponent>());
-			}	
+			}
 		}
-		
-		
 	}
 	
 
@@ -123,8 +121,10 @@ void AMJSceneCapture2D::BeginPlay()
 					}
 				}
 
-				TArray<FVector> Normals; Normals.Init(FVector::UpVector, AllVertices.Num());
-				TArray<FVector2D> UV0; UV0.Init(FVector2D::ZeroVector, AllVertices.Num());
+				TArray<FVector> Normals;
+				Normals.Init(FVector::UpVector, AllVertices.Num());
+				TArray<FVector2D> UV0;
+				UV0.Init(FVector2D::ZeroVector, AllVertices.Num());
 				TArray<FProcMeshTangent> Tangents;
 				Tangents.Init(FProcMeshTangent(), AllVertices.Num());
 

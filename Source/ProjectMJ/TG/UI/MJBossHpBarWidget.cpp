@@ -7,7 +7,6 @@
 #include "AbilitySystem/Attributes/MJCharacterAttributeSet.h"
 #include "Components/ProgressBar.h"
 #include "Kismet/GameplayStatics.h"
-#include "TG/AI/MJAIBossCharacterTG.h"
 
 void UMJBossHpBarWidget::NativeConstruct()
 {
@@ -16,32 +15,32 @@ void UMJBossHpBarWidget::NativeConstruct()
 
 void UMJBossHpBarWidget::BindToAttributes()
 {
-	AActor* BossRef = UGameplayStatics::GetActorOfClass(GetWorld(),AMJAIBossCharacterTG::StaticClass());
-	
-	if (BossRef)
-	{
-		AMJAIBossCharacterTG* MJBossRef = Cast<AMJAIBossCharacterTG>(BossRef);
-
-		if (MJBossRef)
-		{
-			UMJAbilitySystemComponent* MJBossASC = Cast<UMJAbilitySystemComponent>(MJBossRef->GetAbilitySystemComponent());
-			
-			const UMJCharacterAttributeSet* MJBossASet = MJBossASC->GetSet<UMJCharacterAttributeSet>();
-			if (MJBossASC)
-			{
-				if (MJBossASC)
-				{
-					
-					CurrentHealth = MJBossASC->GetNumericAttribute(UMJCharacterAttributeSet::GetHealthAttribute());
-					CurrentMaxHealth = MJBossASC->GetNumericAttribute(UMJCharacterAttributeSet::GetMaxHealthAttribute());
-					
-					MJBossASC->GetGameplayAttributeValueChangeDelegate(MJBossASet->GetHealthAttribute()).AddUObject(this,&UMJBossHpBarWidget::OnHealthChanged);		
-					MJBossASC->GetGameplayAttributeValueChangeDelegate(MJBossASet->GetMaxHealthAttribute()).AddUObject(this,&UMJBossHpBarWidget::OnMaxHealthChanged);
-					
-				}
-			}	
-		}
-	}
+	// AActor* BossRef = UGameplayStatics::GetActorOfClass(GetWorld(),AMJAIBossCharacterTG::StaticClass());
+	//
+	// if (BossRef)
+	// {
+	// 	AMJAIBossCharacterTG* MJBossRef = Cast<AMJAIBossCharacterTG>(BossRef);
+	//
+	// 	if (MJBossRef)
+	// 	{
+	// 		UMJAbilitySystemComponent* MJBossASC = Cast<UMJAbilitySystemComponent>(MJBossRef->GetAbilitySystemComponent());
+	// 		
+	// 		const UMJCharacterAttributeSet* MJBossASet = MJBossASC->GetSet<UMJCharacterAttributeSet>();
+	// 		if (MJBossASC)
+	// 		{
+	// 			if (MJBossASC)
+	// 			{
+	// 				
+	// 				CurrentHealth = MJBossASC->GetNumericAttribute(UMJCharacterAttributeSet::GetHealthAttribute());
+	// 				CurrentMaxHealth = MJBossASC->GetNumericAttribute(UMJCharacterAttributeSet::GetMaxHealthAttribute());
+	// 				
+	// 				MJBossASC->GetGameplayAttributeValueChangeDelegate(MJBossASet->GetHealthAttribute()).AddUObject(this,&UMJBossHpBarWidget::OnHealthChanged);		
+	// 				MJBossASC->GetGameplayAttributeValueChangeDelegate(MJBossASet->GetMaxHealthAttribute()).AddUObject(this,&UMJBossHpBarWidget::OnMaxHealthChanged);
+	// 				
+	// 			}
+	// 		}	
+	// 	}
+	// }
 }
 
 void UMJBossHpBarWidget::OnHealthChanged(const FOnAttributeChangeData& Data)

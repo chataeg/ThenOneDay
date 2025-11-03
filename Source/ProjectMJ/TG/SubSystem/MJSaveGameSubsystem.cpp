@@ -153,15 +153,13 @@ bool UMJSaveGameSubsystem::LoadGameFromSlotNum(int8 SlotNum)
 			MJGI->GetPlayerSessionDataRef().SetCurrentEquippedSkillMap(SaveGame->CurrentEquippedSkillMap);
 			MJGI->GetPlayerSessionDataRef().SetCurrentOwnedSKillMap(SaveGame->CurrentOwnedSkillMap);
 			
-			
-
 			return true;
 		}
 	}
 	return false;
 }
 
-const uint8 UMJSaveGameSubsystem::GetCurrentSavedSlotNum()
+uint8 UMJSaveGameSubsystem::GetCurrentSavedSlotNum() const
 {
 	uint8 Result = 0;
 	
@@ -171,18 +169,14 @@ const uint8 UMJSaveGameSubsystem::GetCurrentSavedSlotNum()
     		
 		if (UGameplayStatics::DoesSaveGameExist(SlotName, 0))
 		{
-			UMJSaveGame* SaveGame = Cast<UMJSaveGame>(UGameplayStatics::LoadGameFromSlot(SlotName, 0));
-			if (SaveGame)
-			{
-				++Result;	
-			}
+			++Result;	
 		}
 	}
 
 	return Result;
 }
 
-const bool UMJSaveGameSubsystem::IsSlotFull()
+bool UMJSaveGameSubsystem::IsSlotFull() const
 {
 	if (GetCurrentSavedSlotNum() == MaxSaveSlotNum)
 	{

@@ -10,7 +10,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "TG/MJGameInstance.h"
 #include "TG/Actor/MJDungeonAISpawnPointActor.h"
-#include "TG/AI/MJAIBossCharacterTG.h"
 #include "TG/DataTable/MJStaticAISpawnRow.h"
 #include "TG/Interface/MJInstancedActorInterface.h"
 #include "TG/SubSystem/MJDungeonGenerationSubSystem.h"
@@ -37,7 +36,6 @@ void AMJGameStateDungeon::BeginPlay()
 	UMJGameInstance * MJGI = GetGameInstance<UMJGameInstance>();
 	if (MJGI)
 	{
-		//LoadedDungeonSessionData = FMJDungeonSessionData();
 		LoadFromInstancedDungeonSessionData(MJGI->GetPlayerSessionDataRef().CurrentDungeonMapNum);
 	}
 		
@@ -470,11 +468,11 @@ void AMJGameStateDungeon::SaveToInstancedDungeonSessionData(uint8 SaveToNum)
 		{
 			if (Iter->Implements<UMJInstancedActorInterface>())
 			{
-					AActor* Actor = *Iter;
-					FMJDungeonActorInfo Info;
-					Info.ActorClass = Actor->GetClass();
-					Info.Transform = Actor->GetActorTransform();
-					NewDungeonSessionData.SpawnInfos.Add(Info);	
+				AActor* Actor = *Iter;
+				FMJDungeonActorInfo Info;
+				Info.ActorClass = Actor->GetClass();
+				Info.Transform = Actor->GetActorTransform();
+				NewDungeonSessionData.SpawnInfos.Add(Info);	
 			}
 		}
 		
@@ -494,17 +492,19 @@ void AMJGameStateDungeon::LoadFromInstancedDungeonSessionData(uint8 LoadFromNum)
 		{
 			if (iter.ActorClass->ImplementsInterface(UMJInstancedActorInterface::StaticClass()))
 			{
-				iter.ActorClass.LoadSynchronous();
-				UClass* LoadedClass = iter.ActorClass.Get();
-				FActorSpawnParameters Params;
-				Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 				
-				AActor* SavedActor = GetWorld()->SpawnActor<AActor>(LoadedClass,iter.Transform,Params);
-				
-				if (SavedActor)
+				UClass* LoadedClass = iter.ActorClass.LoadSynchronous();
+				if (LoadedClass)
 				{
-					//SavedActor->SetActorScale3D(iter.Transform.GetScale3D());
-					OnActorSpawned.Broadcast(SavedActor);
+					FActorSpawnParameters Params;
+					Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+						
+					AActor* SavedActor = GetWorld()->SpawnActorDeferred<AActor>(LoadedClass,iter.Transform,nullptr,nullptr,ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn);
+					if (SavedActor)
+					{
+						SavedActor->FinishSpawning(iter.Transform);
+						OnActorSpawned.Broadcast(SavedActor);
+					}
 				}
 			}
 		}

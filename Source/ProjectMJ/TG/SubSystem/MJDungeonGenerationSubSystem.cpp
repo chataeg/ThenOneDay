@@ -11,18 +11,6 @@ UMJDungeonGenerationSubSystem::UMJDungeonGenerationSubSystem()
 	MaxNodeNum = 10;
 }
 
-void UMJDungeonGenerationSubSystem::Initialize(FSubsystemCollectionBase& Collection)
-{
-	Super::Initialize(Collection);
-	
-	// do
-	// {
-	// 	GenerateDungeonGraph();
-	// }
-	// while (!CheckHasIterableGraph());
-
-}
-
 void UMJDungeonGenerationSubSystem::GenerateDungeonGraph()
 {
 	UMJGameInstance* MJGI = Cast<UMJGameInstance>(GetGameInstance());
@@ -71,7 +59,7 @@ void UMJDungeonGenerationSubSystem::GenerateDungeonGraph()
 		uint8 TooCloseNodesNum = 0;
 		for (auto& iter : DungeonGraph.Nodes)
 		{
-			if (FVector2D::Distance(CandidatePoint, iter.UICoordinate) < OffsetPivot )
+			if (FVector2D::Distance(CandidatePoint, iter.UICoord) < OffsetPivot )
 			{
 				TooCloseNodesNum++;
 			}
@@ -173,9 +161,9 @@ void UMJDungeonGenerationSubSystem::GenerateDungeonGraph()
 		if (iter.NodeType  != EMJNodeType::Battle)
 			continue;
 		
-		if (MaxDist < FVector2D::Distance(DungeonGraph.Nodes[iter.NodeID].UICoordinate, DungeonGraph.Nodes[DungeonGraph.BossNodeID].UICoordinate))
+		if (MaxDist < FVector2D::Distance(DungeonGraph.Nodes[iter.NodeID].UICoord, DungeonGraph.Nodes[DungeonGraph.BossNodeID].UICoord))
 		{
-			MaxDist = FVector2D::Distance(DungeonGraph.Nodes[iter.NodeID].UICoordinate, DungeonGraph.Nodes[DungeonGraph.BossNodeID].UICoordinate);
+			MaxDist = FVector2D::Distance(DungeonGraph.Nodes[iter.NodeID].UICoord, DungeonGraph.Nodes[DungeonGraph.BossNodeID].UICoord);
 			MaxDistNodeNum = iter.NodeID;
 			
 		}
@@ -201,7 +189,7 @@ void UMJDungeonGenerationSubSystem::GenerateDungeonGraph()
 }
 
 
-FMJDungeonNode UMJDungeonGenerationSubSystem::MakeNewNode(uint8 NodeNum, uint8 AssignedMapID, EMJNodeType NodeType,EMJAISpawnType AISpawnType, FVector2D UICoordinate)
+FMJDungeonNode UMJDungeonGenerationSubSystem::MakeNewNode(uint8 NodeNum, uint8 AssignedMapID, EMJNodeType NodeType,EMJAISpawnType AISpawnType, FVector2D UICoord)
 {
 	FMJDungeonNode NewNode;
 
@@ -209,7 +197,7 @@ FMJDungeonNode UMJDungeonGenerationSubSystem::MakeNewNode(uint8 NodeNum, uint8 A
 	NewNode.AssignedMapID = AssignedMapID;
 	NewNode.NodeType = NodeType;
 	NewNode.AISpawnType = AISpawnType;
-	NewNode.UICoordinate = UICoordinate;
+	NewNode.UICoord = UICoord;
 	
 	return NewNode;
 }
@@ -230,7 +218,7 @@ void UMJDungeonGenerationSubSystem::ConnectNodesByDistance(float MaxDistance, in
 
 			FMJDungeonNode& IterNode = DungeonGraph.Nodes[j];
 			
-			float DistanceBetweenNodes = FVector2D::Distance(CurrentNode.UICoordinate, IterNode.UICoordinate);
+			float DistanceBetweenNodes = FVector2D::Distance(CurrentNode.UICoord, IterNode.UICoord);
 			
 			if (DistanceBetweenNodes <= MaxDistance)
 			{
@@ -274,7 +262,7 @@ void UMJDungeonGenerationSubSystem::ConnectNodesByMST(float MaxDistance)
 		{
 			if (i == j) continue;
 
-			float Distance = FVector2D::Distance(DungeonGraph.Nodes[i].UICoordinate,DungeonGraph.Nodes[j].UICoordinate);
+			float Distance = FVector2D::Distance(DungeonGraph.Nodes[i].UICoord,DungeonGraph.Nodes[j].UICoord);
 	
 			AllCandidateEdges.Add(MakeTuple(i,j,Distance));
 		}
@@ -288,6 +276,7 @@ void UMJDungeonGenerationSubSystem::ConnectNodesByMST(float MaxDistance)
 	TArray<int16> Parent;
 	Parent.Init(-1,NodeCount);
 
+	
 	std::function<uint8(uint8)> Find = [&Parent, &Find](uint8 Node) -> uint8
 	{
 		if (Parent[Node] < 0 ) return Node;
@@ -326,9 +315,31 @@ bool UMJDungeonGenerationSubSystem::CheckHasIterableGraph()
 	
 	TArray<bool> Visited;
 	Visited.Init(false, NodeCount);
+	
+	TQueue<uint8> Queue;
+	Queue.Enqueue(StartID);
 
-	DFS(StartID, BossID, /* OutArray */Visited);
+	while (!Queue.IsEmpty())
+	{
+		uint8 Cur = 0;
+		if (Queue.Dequeue(Cur))
+		{
+			for (auto Iter : DungeonGraph.Nodes[Cur].ConnectedNodeIDs)
+			{
+				if (BossID == Iter)
+				{
+					continue;
+				}
+				if (!Visited[Iter])
+				{
+					Visited[Iter] = true;
+					Queue.Enqueue(Iter);
+				}
+			}
+		}
 
+	}
+	
 	for (uint8 NodeID = 0; NodeID < NodeCount; ++NodeID)
 	{
 		if (NodeID == BossID) 
@@ -341,19 +352,6 @@ bool UMJDungeonGenerationSubSystem::CheckHasIterableGraph()
 	return true;  
 }
 
-void UMJDungeonGenerationSubSystem::DFS(uint8 CurrentNode, const uint8 BossID, TArray<bool>& Visited)
-{
-	Visited[CurrentNode] = true;
-	
-	for (uint8 Next : DungeonGraph.Nodes[CurrentNode].ConnectedNodeIDs)
-	{
-		if (Next == BossID) 
-			continue;
-
-		if (!Visited[Next])
-			DFS(Next, BossID, Visited);
-	}
-}
 
 bool UMJDungeonGenerationSubSystem::CheckHasRoute(uint8 CurrentNodeNum, uint8 DestNodeNum)
 {
@@ -365,11 +363,6 @@ bool UMJDungeonGenerationSubSystem::CheckHasRoute(uint8 CurrentNodeNum, uint8 De
 		}
 	}
 	return false;
-}
-
-FVector2D UMJDungeonGenerationSubSystem::GetCubicBezier(float t, const FVector2D Point)
-{
-	return FVector2D(0,0);
 }
 
 FVector2D UMJDungeonGenerationSubSystem::GetQuadBezier(float t, const FVector2D StartPoint, const FVector2D EndPoint,

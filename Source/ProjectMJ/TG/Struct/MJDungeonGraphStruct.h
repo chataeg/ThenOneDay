@@ -37,7 +37,7 @@ struct FMJDungeonNode
 	EMJAISpawnType AISpawnType;
 
 	UPROPERTY(BlueprintReadOnly)
-	FVector2D UICoordinate;
+	FVector2D UICoord;
 
 	UPROPERTY(BlueprintReadOnly)
 	TArray<int32> ConnectedNodeIDs;

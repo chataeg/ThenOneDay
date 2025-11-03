@@ -41,11 +41,11 @@ public:
 	bool LoadGameFromSlotNum(int8 SlotNum);
 
 	UFUNCTION()
-	const uint8 GetCurrentSavedSlotNum();
+	uint8 GetCurrentSavedSlotNum() const;
+	
+	FORCEINLINE uint8 GetMaxSaveSlotNum() const {return MaxSaveSlotNum; }
 
-	const uint8 GetMaxSaveSlotNum() {return MaxSaveSlotNum; }
-
-	const bool IsSlotFull();
+	bool IsSlotFull() const;
 
 	// Loading Screen Section	
 	

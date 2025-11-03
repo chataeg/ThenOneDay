@@ -82,8 +82,6 @@ FReply UMJDungeonNodeWidget::NativeOnMouseButtonDoubleClick(const FGeometry& InG
 
 					GetGameInstance()->GetSubsystem<UMJSaveGameSubsystem>()->SaveGameToCurrentSlotNum();
 					
-					
-					
 					GMDungeon->TravelToMapByNode(MapName,UKismetStringLibrary::Conv_StringToInt(NodeNum->GetText().ToString()));
 
 					FInputModeGameAndUI InputMode;
