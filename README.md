@@ -8,6 +8,10 @@ UE 5.4 TopView 핵앤슬래시 RPG 싱글플레이어 게임
 개발 인원 : 5명   
 맡은 역할 :  핵심 게임 시스템 설계 및 구현, 게임 플로우 구현, 게임 플로우 UI 구현   
 
+# 포트폴리오 영상 (클릭하여 이동)
+[![포트폴리오 영상](http://img.youtube.com/vi/7xGPFTuuVN8/0.jpg)](https://youtu.be/7xGPFTuuVN8)
+
+
 ---
 ![portfolio_page-0014](https://github.com/user-attachments/assets/06526a4f-c556-4198-809d-57746a2b2bd1)
 ![portfolio_page-0015](https://github.com/user-attachments/assets/dab64f82-5c9c-41d5-8f67-de502a631d62)
